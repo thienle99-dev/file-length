@@ -34,7 +34,14 @@ export class LineCountDecorationProvider implements vscode.FileDecorationProvide
         let color: vscode.ThemeColor | undefined;
         let tooltip = `${entry.count.toLocaleString()} lines`;
 
-        // 1. Complexity handling
+        // 1. Git Delta handling
+        if (config.get('showGitDelta') && entry.gitDelta !== undefined && entry.gitDelta !== 0) {
+            const sign = entry.gitDelta > 0 ? '+' : '';
+            textBadge += ` (${sign}${entry.gitDelta})`;
+            tooltip += ` (${sign}${entry.gitDelta} since HEAD)`;
+        }
+
+        // 2. Complexity handling
         if (config.get('showComplexity') && entry.complexity) {
             const level = entry.complexity.level;
             if (level === 'high') {

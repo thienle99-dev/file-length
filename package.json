@@ -2,7 +2,7 @@
   "name": "file-length-visualizer",
   "displayName": "File Length & Complexity Visualizer",
   "description": "Displays line counts and complexity insights next to file names in the Explorer.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "icon": "icon.png",
   "publisher": "ChiThien",
   "repository": {
@@ -20,6 +20,13 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "file-length-visualizer.showDashboard",
+        "title": "File Length: Show Analytics Dashboard",
+        "category": "File Length"
+      }
+    ],
     "configuration": {
       "title": "Line Count Explorer",
       "properties": {
@@ -47,6 +54,11 @@
           "type": "boolean",
           "default": true,
           "description": "Change file color in Explorer based on line count (Red > 1000, Orange > 500, Green < 100)."
+        },
+        "lineCount.showGitDelta": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show line count change compared to Git HEAD."
         }
       }
     }

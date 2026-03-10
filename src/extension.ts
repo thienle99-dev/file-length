@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import { LineCountService } from './LineCountService';
 import { LineCountDecorationProvider } from './FileDecorationProvider';
+import { WorkspaceScanner } from './WorkspaceScanner';
+import { DashboardPanel } from './DashboardPanel';
 
 export function activate(context: vscode.ExtensionContext) {
     const service = new LineCountService();
@@ -11,7 +13,20 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.registerFileDecorationProvider(decorationProvider)
     );
 
-    // 2. Watch for file changes across workspace
+    // 2. Register Dashboard Command
+    const scanner = new WorkspaceScanner(service);
+    context.subscriptions.push(vscode.commands.registerCommand('file-length-visualizer.showDashboard', async () => {
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: "Analyzing project files...",
+            cancellable: false
+        }, async (progress) => {
+            const stats = await scanner.scan();
+            DashboardPanel.createOrShow(context.extensionUri, stats);
+        });
+    }));
+
+    // 3. Watch for file changes across workspace
     const watcher = vscode.workspace.createFileSystemWatcher('**/*');
     
     // Per-URI throttled refresh to prevent UI thrashing
@@ -40,7 +55,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Handle renames
     context.subscriptions.push(vscode.workspace.onDidRenameFiles((e: vscode.FileRenameEvent) => {
-        e.files.forEach((f: { oldUri: vscode.Uri; newUri: vscode.Uri }) => {
+        e.files.forEach((f) => {
             service.invalidate(f.oldUri);
             service.invalidate(f.newUri);
             decorationProvider.refresh([f.oldUri, f.newUri]);
@@ -52,9 +67,28 @@ export function activate(context: vscode.ExtensionContext) {
         if (e.affectsConfiguration('lineCount')) {
             service.updateConfig();
             service.clearCache();
+            service.clearBaseCache();
             decorationProvider.refresh();
         }
     }));
+
+    // Handle Git events to refresh deltas
+    const gitExt = vscode.extensions.getExtension('vscode.git');
+    if (gitExt) {
+        gitExt.activate().then(exports => {
+            const api = exports.getAPI(1);
+            context.subscriptions.push(api.onDidPublish(() => {
+                service.clearBaseCache();
+                decorationProvider.refresh();
+            }));
+            api.repositories.forEach((repo: any) => {
+                context.subscriptions.push(repo.state.onDidChange(() => {
+                    service.clearBaseCache();
+                    decorationProvider.refresh();
+                }));
+            });
+        });
+    }
 
     context.subscriptions.push(watcher, service as any);
 }
