@@ -1,0 +1,56 @@
+{
+  "name": "file-line-count",
+  "displayName": "Line Count Explorer",
+  "description": "Displays line counts next to file names in the Explorer.",
+  "version": "1.0.0",
+  "publisher": "antigravity",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thienle99-dev/file-length.git"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Line Count Explorer",
+      "properties": {
+        "lineCount.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/Disable line count decorations."
+        },
+        "lineCount.showOnlyNonEmptyLines": {
+          "type": "boolean",
+          "default": false,
+          "description": "If enabled, blank lines will not be counted."
+        },
+        "lineCount.ignoreComments": {
+          "type": "boolean",
+          "default": false,
+          "description": "If enabled, lines containing only comments will be ignored."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "pnpm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "pnpm run compile && pnpm run lint",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.75.0",
+    "@types/node": "16.x",
+    "typescript": "^4.9.5",
+    "eslint": "^8.36.0"
+  }
+}
