@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import ignore, { Ignore } from 'ignore';
+import ignore from 'ignore';
+import { Ignore } from 'ignore';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -18,15 +19,32 @@ export function formatLineCount(count: number): string {
  * Returns a ThemeColor based on the line count for the heatmap feature.
  */
 export function getHeatmapColor(count: number): vscode.ThemeColor | undefined {
-    if (count >= 1000) return new vscode.ThemeColor('charts.red');
-    if (count >= 500) return new vscode.ThemeColor('charts.orange');
-    if (count <= 100) return new vscode.ThemeColor('charts.green');
+    const config = vscode.workspace.getConfiguration('lineCount');
+    const small = config.get<number>('thresholdSmall') || 100;
+    const large = config.get<number>('thresholdLarge') || 500;
+
+    if (count >= large * 2) return new vscode.ThemeColor('charts.red');
+    if (count >= large) return new vscode.ThemeColor('charts.orange');
+    if (count <= small) return new vscode.ThemeColor('charts.green');
     return undefined;
 }
 
 /**
- * Common comment regex patterns per extension
+ * Common comment regex patterns and language mapping
  */
+const LANGUAGE_MAP: Record<string, string> = {
+    'js': 'JavaScript', 'ts': 'TypeScript', 'tsx': 'React TS', 'jsx': 'React JS',
+    'py': 'Python', 'java': 'Java', 'cpp': 'C++', 'c': 'C', 'cs': 'C#',
+    'go': 'Go', 'rs': 'Rust', 'swift': 'Swift', 'css': 'CSS', 'html': 'HTML',
+    'xml': 'XML', 'sql': 'SQL', 'lua': 'Lua', 'rb': 'Ruby', 'sh': 'Shell',
+    'yaml': 'YAML', 'yml': 'YAML', 'md': 'Markdown', 'json': 'JSON'
+};
+
+export function getLanguageName(filePath: string): string {
+    const ext = filePath.split('.').pop()?.toLowerCase() || '';
+    return LANGUAGE_MAP[ext] || 'Other';
+}
+
 const COMMENT_PATTERNS: Record<string, RegExp> = {
     // C-style
     'js': /\/\/.*|\/\*[\s\S]*?\*\//gm,
@@ -117,6 +135,11 @@ export class GitignoreManager {
         
         // Add defaults
         this.ig.add(DEFAULT_IGNORED_PATHS);
+
+        // Add custom exclude paths from settings
+        const config = vscode.workspace.getConfiguration('lineCount');
+        const customExcludes = config.get<string[]>('excludePaths') || [];
+        this.ig.add(customExcludes);
 
         if (fs.existsSync(gitignorePath)) {
             try {

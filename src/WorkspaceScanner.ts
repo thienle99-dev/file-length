@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { LineCountService } from './LineCountService';
+import { getLanguageName } from './utils';
 
 export interface WorkspaceStats {
     totalFiles: number;
@@ -9,6 +10,7 @@ export interface WorkspaceStats {
     totalBlanks: number;
     topFiles: { path: string, count: number }[];
     distribution: { [key: string]: number };
+    languages: { [key: string]: { files: number, lines: number } };
 }
 
 export class WorkspaceScanner {
@@ -31,7 +33,8 @@ export class WorkspaceScanner {
                 '301-600': 0,
                 '601-1000': 0,
                 '1001+': 0
-            }
+            },
+            languages: {}
         };
 
         const allFilesData: { path: string, count: number }[] = [];
@@ -40,7 +43,7 @@ export class WorkspaceScanner {
         const batchSize = 50;
         for (let i = 0; i < files.length; i += batchSize) {
             const batch = files.slice(i, i + batchSize);
-            const results = await Promise.all(batch.map(uri => this.service.computeLineCount(uri)));
+            const results = await Promise.all(batch.map((uri: vscode.Uri) => this.service.computeLineCount(uri)));
             
             results.forEach((entry: any, index: number) => {
                 if (entry) {
@@ -53,6 +56,14 @@ export class WorkspaceScanner {
 
                     const relPath = vscode.workspace.asRelativePath(batch[index]);
                     allFilesData.push({ path: relPath, count: entry.count });
+
+                    // Language Statistics
+                    const lang = getLanguageName(relPath);
+                    if (!stats.languages[lang]) {
+                        stats.languages[lang] = { files: 0, lines: 0 };
+                    }
+                    stats.languages[lang].files++;
+                    stats.languages[lang].lines += entry.count;
 
                     // Distribution
                     if (entry.count <= 100) stats.distribution['0-100']++;

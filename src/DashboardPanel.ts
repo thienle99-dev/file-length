@@ -57,6 +57,15 @@ export class DashboardPanel {
             comments: stats.totalComments,
             blanks: stats.totalBlanks
         });
+        
+        // Sort languages by line count
+        const languageData = Object.entries(stats.languages)
+            .sort((a, b) => b[1].lines - a[1].lines)
+            .reduce((obj, [key, val]) => {
+                obj[key] = val;
+                return obj;
+            }, {} as any);
+        const languageJson = JSON.stringify(languageData);
 
         return `<!DOCTYPE html>
 <html lang="en">
@@ -183,6 +192,11 @@ export class DashboardPanel {
         </div>
 
         <div class="card">
+            <h2>🌍 Language Breakdown</h2>
+            <canvas id="langChart"></canvas>
+        </div>
+
+        <div class="card">
             <h2>📈 Line Distribution</h2>
             <canvas id="distChart"></canvas>
         </div>
@@ -197,6 +211,7 @@ export class DashboardPanel {
         const topFiles = ${topFilesJson};
         const distribution = ${distributionJson};
         const pieData = ${pieDataJson};
+        const languages = ${languageJson};
 
         // Render Top List
         const list = document.getElementById('topList');
@@ -209,6 +224,28 @@ export class DashboardPanel {
 
         // Charts theme integration
         const getVscodeColor = (name) => getComputedStyle(document.body).getPropertyValue(name).trim();
+
+        // Language Chart
+        new Chart(document.getElementById('langChart'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(languages),
+                datasets: [{
+                    label: 'Lines',
+                    data: Object.values(languages).map(l => l.lines),
+                    backgroundColor: getVscodeColor('--vscode-charts-purple') || '#8957e5'
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, grid: { color: getVscodeColor('--vscode-panel-border') } },
+                    y: { grid: { display: false } }
+                }
+            }
+        });
 
         // Distribution Chart
         new Chart(document.getElementById('distChart'), {

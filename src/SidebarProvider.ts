@@ -30,7 +30,8 @@ export class SidebarProvider implements vscode.TreeDataProvider<TreeItem> {
         if (!element) {
             return Promise.resolve([
                 new TreeItem("Summary", vscode.TreeItemCollapsibleState.Expanded, "root-summary"),
-                new TreeItem("Top 10 Files", vscode.TreeItemCollapsibleState.Expanded, "root-top"),
+                new TreeItem("Languages", vscode.TreeItemCollapsibleState.Collapsed, "root-languages"),
+                new TreeItem("Top 10 Files", vscode.TreeItemCollapsibleState.Collapsed, "root-top"),
             ]);
         }
 
@@ -41,6 +42,18 @@ export class SidebarProvider implements vscode.TreeDataProvider<TreeItem> {
                 new TreeItem(`Comments: ${this.stats.totalComments.toLocaleString()}`, vscode.TreeItemCollapsibleState.None),
                 new TreeItem(`Ratio: ${Math.round((this.stats.totalComments / this.stats.totalLines) * 100) || 0}%`, vscode.TreeItemCollapsibleState.None),
             ]);
+        }
+
+        if (element.id === "root-languages") {
+            const sortedLangs = Object.entries(this.stats.languages)
+                .sort((a, b) => b[1].lines - a[1].lines);
+
+            return Promise.resolve(sortedLangs.map(([name, data]) => {
+                return new TreeItem(
+                    `${name}: ${data.lines.toLocaleString()} lines (${data.files} files)`,
+                    vscode.TreeItemCollapsibleState.None
+                );
+            }));
         }
 
         if (element.id === "root-top") {

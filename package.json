@@ -115,6 +115,24 @@
           "type": "boolean",
           "default": true,
           "description": "Show line count change compared to Git HEAD."
+        },
+        "lineCount.excludePaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Additional paths/glob patterns to exclude from line counting."
+        },
+        "lineCount.thresholdSmall": {
+          "type": "number",
+          "default": 100,
+          "description": "Files below this line count will be highlighted as 'Small' (Default: 100)."
+        },
+        "lineCount.thresholdLarge": {
+          "type": "number",
+          "default": 500,
+          "description": "Files above this line count will be highlighted as 'Growing' (Orange). Above 2x this value will be 'Huge' (Red)."
         }
       }
     }

@@ -99,6 +99,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration((e: vscode.ConfigurationChangeEvent) => {
         if (e.affectsConfiguration('lineCount')) {
             service.updateConfig();
+            gitignoreManager.loadGitignore(); // Reload rules including custom excludePaths
             service.clearCache();
             service.clearBaseCache();
             decorationProvider.refresh();
