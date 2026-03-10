@@ -3,7 +3,7 @@
   "displayName": "Line Count Explorer",
   "description": "Displays line counts next to file names in the Explorer.",
   "version": "1.0.0",
-  "publisher": "antigravity",
+  "publisher": "chithien",
   "repository": {
     "type": "git",
     "url": "https://github.com/thienle99-dev/file-length.git"
