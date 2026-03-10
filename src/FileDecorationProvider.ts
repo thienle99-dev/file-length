@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { LineCountService } from './LineCountService';
-import { formatLineCount } from './utils';
+import { formatLineCount, getHeatmapColor } from './utils';
 
 export class LineCountDecorationProvider implements vscode.FileDecorationProvider {
     private readonly _onDidChangeFileDecorations = new vscode.EventEmitter<vscode.Uri | vscode.Uri[]>();
@@ -13,16 +13,14 @@ export class LineCountDecorationProvider implements vscode.FileDecorationProvide
      */
     async provideFileDecoration(uri: vscode.Uri, token: vscode.CancellationToken): Promise<vscode.FileDecoration | undefined> {
         // If we have it in cache, return immediately
-        const cached = this.service.getCachedCount(uri);
+        const cached = this.service.getCachedEntry(uri);
         if (cached !== undefined) {
             return this.createDecoration(cached);
         }
 
         // Otherwise, kick off computation (Async + Lazy)
-        // We don't 'await' here to keep the UI thread responsive, 
-        // instead we return undefined and trigger a refresh once done.
-        this.service.computeLineCount(uri).then(count => {
-            if (count !== undefined && !token.isCancellationRequested) {
+        this.service.computeLineCount(uri).then(entry => {
+            if (entry !== undefined && !token.isCancellationRequested) {
                 this._onDidChangeFileDecorations.fire(uri);
             }
         });
@@ -30,10 +28,33 @@ export class LineCountDecorationProvider implements vscode.FileDecorationProvide
         return undefined;
     }
 
-    private createDecoration(count: number): vscode.FileDecoration {
+    private createDecoration(entry: any): vscode.FileDecoration {
+        const config = vscode.workspace.getConfiguration('lineCount');
+        let textBadge = formatLineCount(entry.count);
+        let color: vscode.ThemeColor | undefined;
+        let tooltip = `${entry.count.toLocaleString()} lines`;
+
+        // 1. Complexity handling
+        if (config.get('showComplexity') && entry.complexity) {
+            const level = entry.complexity.level;
+            if (level === 'high') {
+                textBadge = '🔴'; // Use icon as badge if high complexity
+                tooltip += ` · High Complexity (Score: ${entry.complexity.score})`;
+            } else if (level === 'medium') {
+                textBadge = '⚠'; // Use icon as badge if medium complexity
+                tooltip += ` · Medium Complexity (Score: ${entry.complexity.score})`;
+            }
+        }
+
+        // 2. Heatmap handling
+        if (config.get('showHeatmap')) {
+            color = getHeatmapColor(entry.count);
+        }
+
         return {
-            badge: formatLineCount(count), // Appears next to filename
-            tooltip: `${count.toLocaleString()} lines`
+            badge: textBadge,
+            color,
+            tooltip
         };
     }
 

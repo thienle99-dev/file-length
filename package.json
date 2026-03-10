@@ -1,9 +1,10 @@
 {
-  "name": "file-line-count",
-  "displayName": "Line Count Explorer",
-  "description": "Displays line counts next to file names in the Explorer.",
+  "name": "file-length-visualizer",
+  "displayName": "File Length & Complexity Visualizer",
+  "description": "Displays line counts and complexity insights next to file names in the Explorer.",
   "version": "1.0.0",
-  "publisher": "chithien",
+  "icon": "icon.png",
+  "publisher": "ChiThien",
   "repository": {
     "type": "git",
     "url": "https://github.com/thienle99-dev/file-length.git"
@@ -36,6 +37,16 @@
           "type": "boolean",
           "default": false,
           "description": "If enabled, lines containing only comments will be ignored."
+        },
+        "lineCount.showComplexity": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show complexity warning icon (⚠) for high-complexity files."
+        },
+        "lineCount.showHeatmap": {
+          "type": "boolean",
+          "default": true,
+          "description": "Change file color in Explorer based on line count (Red > 1000, Orange > 500, Green < 100)."
         }
       }
     }

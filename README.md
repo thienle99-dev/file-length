@@ -1,6 +1,6 @@
-# Line Count Explorer 📊
+# File Length & Complexity Visualizer 📊
 
-Hiển thị tổng số dòng code ngay trong thanh Explorer của VSCode. Một giải pháp nhẹ nhàng, hiệu quả để quản lý quy mô tệp tin trong dự án của bạn.
+Hiển thị tổng số dòng code và độ phức tạp ngay trong thanh Explorer của VSCode. Một giải pháp nhẹ nhàng, hiệu quả để quản lý chất lượng tệp tin trong dự án của bạn.
 
 ![Mockup](mockup.png)
 

@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
-import { getCommentRegex, isCodeFile, shouldIgnorePath, LRUCache } from './utils';
+import { getCommentRegex, isCodeFile, shouldIgnorePath, LRUCache, calculateComplexity } from './utils';
 
 interface CacheEntry {
     count: number;
     mtime: number;
+    complexity?: { score: number, level: 'low' | 'medium' | 'high' };
 }
 
 export class LineCountService {
@@ -19,10 +20,10 @@ export class LineCountService {
     }
 
     /**
-     * Re-computes line count for a URI. 
+     * Re-computes line count and complexity for a URI. 
      * Uses mtime to avoid redundant reads.
      */
-    public async computeLineCount(uri: vscode.Uri): Promise<number | undefined> {
+    public async computeLineCount(uri: vscode.Uri): Promise<CacheEntry | undefined> {
         if (!this.config.get('enabled')) return undefined;
 
         const filePath = uri.fsPath;
@@ -37,33 +38,39 @@ export class LineCountService {
             // Check cache with mtime validation
             const cached = this.cache.get(uri.toString());
             if (cached && cached.mtime === stats.mtime) {
-                return cached.count;
+                return cached;
             }
 
             // Only read and parse if mtime changed or not in cache
             const contentBuffer = await vscode.workspace.fs.readFile(uri);
-            let text = contentBuffer.toString();
+            const text = contentBuffer.toString();
+            let processedText = text;
 
             if (this.config.get('ignoreComments')) {
                 const regex = getCommentRegex(uri.fsPath);
-                if (regex) text = text.replace(regex, '');
+                if (regex) processedText = processedText.replace(regex, '');
             }
 
-            let lines = text.split(/\r?\n/);
+            let lines = processedText.split(/\r?\n/);
             if (this.config.get('showOnlyNonEmptyLines')) {
                 lines = lines.filter((line: string) => line.trim().length > 0);
             }
 
             const count = lines.length;
-            this.cache.set(uri.toString(), { count, mtime: stats.mtime });
-            return count;
+            const complexity = this.config.get('showComplexity') 
+                ? calculateComplexity(text, filePath) 
+                : undefined;
+
+            const result: CacheEntry = { count, mtime: stats.mtime, complexity };
+            this.cache.set(uri.toString(), result);
+            return result;
         } catch {
             return undefined;
         }
     }
 
-    public getCachedCount(uri: vscode.Uri): number | undefined {
-        return this.cache.get(uri.toString())?.count;
+    public getCachedEntry(uri: vscode.Uri): CacheEntry | undefined {
+        return this.cache.get(uri.toString());
     }
 
     public invalidate(uri: vscode.Uri) {
@@ -74,4 +81,5 @@ export class LineCountService {
         this.cache.clear();
     }
 }
+
 

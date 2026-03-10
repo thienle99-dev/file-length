@@ -12,6 +12,16 @@ export function formatLineCount(count: number): string {
 }
 
 /**
+ * Returns a ThemeColor based on the line count for the heatmap feature.
+ */
+export function getHeatmapColor(count: number): vscode.ThemeColor | undefined {
+    if (count >= 1000) return new vscode.ThemeColor('charts.red');
+    if (count >= 500) return new vscode.ThemeColor('charts.orange');
+    if (count <= 100) return new vscode.ThemeColor('charts.green');
+    return undefined;
+}
+
+/**
  * Common comment regex patterns per extension
  */
 const COMMENT_PATTERNS: Record<string, RegExp> = {
@@ -51,6 +61,31 @@ const COMMENT_PATTERNS: Record<string, RegExp> = {
 export function getCommentRegex(filePath: string): RegExp | undefined {
     const ext = filePath.split('.').pop()?.toLowerCase();
     return ext ? COMMENT_PATTERNS[ext] : undefined;
+}
+
+/**
+ * Approximates Cyclomatic Complexity using regex to count decision points.
+ */
+export function calculateComplexity(text: string, filePath: string): { score: number, level: 'low' | 'medium' | 'high' } {
+    const ext = filePath.split('.').pop()?.toLowerCase() || '';
+    
+    // 1. Strip strings to avoid counting decision points inside text
+    const cleanText = text.replace(/(["'])(?:(?=(\\?))\2.)*?\1/g, '').replace(/`[\s\S]*?`/g, '');
+    
+    // 2. Count decision points (if, for, while, switch, catch, &&, ||, ?)
+    const decisionPoints = (cleanText.match(/\b(if|for|while|switch|catch)\b|&&|\|\||\?|case\s+/g) || []).length;
+    
+    // 3. Count functions/methods to find average complexity per block
+    const functions = (cleanText.match(/\b(function|class|constructor)\b|=>|\w+\s*\([^)]*\)\s*\{/g) || []).length;
+    
+    const score = decisionPoints;
+    const avgScore = score / Math.max(functions, 1);
+    
+    let level: 'low' | 'medium' | 'high' = 'low';
+    if (avgScore > 10 || score > 50) level = 'high';
+    else if (avgScore > 5 || score > 20) level = 'medium';
+    
+    return { score, level };
 }
 
 const IGNORED_PATHS = [
@@ -121,4 +156,5 @@ export class LRUCache<V> {
         this.map.clear();
     }
 }
+
 
