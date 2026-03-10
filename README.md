@@ -23,14 +23,16 @@ See line counts right next to filenames.
 - **Complexity Alerts**: ⚠ (Medium) and 🔴 (High) icons appear for files with complex logic (nested loops, many conditionals).
 - **Git Delta**: See changes like `(+12)` or `(-3)` relative to your last Git commit.
 
-### 2. 📊 Professional Analytics Dashboard
+### 2. 📊 Professional Analytics
 
-Get a "birds-eye view" of your entire project. Run `File Length: Show Analytics Dashboard` to see:
+Get a "birds-eye view" of your entire project.
 
-- **Project Summary**: Total files, lines, and code/comment density.
-- **Top 10 Largest Files**: Your project's "heavyweights" listed in order.
-- **Line Distribution**: A bar chart showing the scale of your codebase.
-- **Ratio Analysis**: A pie chart breaking down Code vs. Comments vs. Blank lines.
+- **Activity Bar View**: Access quick stats and top 10 largest files directly from the side panel.
+- **Dashboard**: Run `File Length: Show Analytics Dashboard` for an interactive full-screen experience:
+  - **Project Summary**: Total files, lines, and code/comment density.
+  - **Top 10 Largest Files**: Your project's "heavyweights" listed in order.
+  - **Line Distribution**: A bar chart showing the scale of your codebase.
+  - **Ratio Analysis**: A pie chart breaking down Code vs. Comments vs. Blank lines.
 
 ### 3. 🚀 Built for Scale
 
@@ -78,6 +80,40 @@ Search for **"File Length & Complexity Visualizer"** in the VS Code Extensions v
 2. `pnpm install`
 3. Press `F5` to start debugging.
 4. To package as `.vsix`: `vsce package`
+
+---
+
+## 📋 Requirements
+
+- **VS Code**: 1.75+
+- **Git**: (Optional) Required for real-time Delta calculations.
+
+---
+
+## 💬 Support & Contribution
+
+- **Issues**: Report bugs or request features on [GitHub Issues](https://github.com/thienle99-dev/file-length/issues).
+- **Source**: Check out the [source code](https://github.com/thienle99-dev/file-length) and feel free to contribute!
+
+---
+
+## ⚠️ Known Issues
+
+- **Remote Development**: In some SSH/Remote environments, Git delta calculation might be slower depending on the network.
+- **Large Files**: Files over 10MB are automatically ignored to preserve UI performance.
+
+## 🗒️ Release Notes
+
+### 1.0.3
+
+- Added **Git Delta** support: See real-time changes since your last commit.
+- Integrated **Complexity Analysis**: Visual warnings for complex code.
+- Added **Heatmap coloring** for filenames.
+- Introduced the **Analytics Dashboard** for whole-project insights.
+
+### 1.0.0
+
+- Initial release with basic line counting and performance caching.
 
 ---
 

@@ -5,6 +5,11 @@
   "version": "1.0.3",
   "icon": "icon.png",
   "publisher": "ChiThien",
+  "author": {
+    "name": "Chi Thien",
+    "email": "chithien0909@gmail.com"
+  },
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/thienle99-dev/file-length.git"
@@ -12,7 +17,24 @@
   "engines": {
     "vscode": "^1.75.0"
   },
+  "homepage": "https://github.com/thienle99-dev/file-length/blob/main/README.md",
+  "bugs": {
+    "url": "https://github.com/thienle99-dev/file-length/issues"
+  },
+  "extensionDependencies": [
+    "vscode.git"
+  ],
+  "keywords": [
+    "line count",
+    "complexity",
+    "git",
+    "visualizer",
+    "heatmap",
+    "explorer",
+    "sloc"
+  ],
   "categories": [
+    "Visualization",
     "Other"
   ],
   "activationEvents": [
@@ -20,13 +42,47 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "file-length-explorer",
+          "title": "File Length",
+          "icon": "icon.png"
+        }
+      ]
+    },
+    "views": {
+      "file-length-explorer": [
+        {
+          "id": "file-length-sidebar",
+          "name": "Line Statistics",
+          "type": "tree",
+          "icon": "icon.png"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "file-length-visualizer.showDashboard",
         "title": "File Length: Show Analytics Dashboard",
         "category": "File Length"
+      },
+      {
+        "command": "file-length-visualizer.refreshSidebar",
+        "title": "Refresh Statistics",
+        "icon": "$(refresh)",
+        "category": "File Length"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "file-length-visualizer.refreshSidebar",
+          "when": "view == file-length-sidebar",
+          "group": "navigation"
+        }
+      ]
+    },
     "configuration": {
       "title": "Line Count Explorer",
       "properties": {

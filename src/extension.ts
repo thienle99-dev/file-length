@@ -3,17 +3,24 @@ import { LineCountService } from './LineCountService';
 import { LineCountDecorationProvider } from './FileDecorationProvider';
 import { WorkspaceScanner } from './WorkspaceScanner';
 import { DashboardPanel } from './DashboardPanel';
+import { SidebarProvider } from './SidebarProvider';
 
 export function activate(context: vscode.ExtensionContext) {
     const service = new LineCountService();
     const decorationProvider = new LineCountDecorationProvider(service);
+    const sidebarProvider = new SidebarProvider(service);
 
     // 1. Register display provider
     context.subscriptions.push(
         vscode.window.registerFileDecorationProvider(decorationProvider)
     );
 
-    // 2. Register Dashboard Command
+    // 2. Register Sidebar
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider('file-length-sidebar', sidebarProvider)
+    );
+
+    // 3. Register Commands
     const scanner = new WorkspaceScanner(service);
     context.subscriptions.push(vscode.commands.registerCommand('file-length-visualizer.showDashboard', async () => {
         await vscode.window.withProgress({
@@ -26,7 +33,14 @@ export function activate(context: vscode.ExtensionContext) {
         });
     }));
 
-    // 3. Watch for file changes across workspace
+    context.subscriptions.push(vscode.commands.registerCommand('file-length-visualizer.refreshSidebar', () => {
+        sidebarProvider.refresh();
+    }));
+
+    // Initial scan for sidebar
+    sidebarProvider.refresh();
+
+    // 4. Watch for file changes across workspace
     const watcher = vscode.workspace.createFileSystemWatcher('**/*');
     
     // Per-URI throttled refresh to prevent UI thrashing
@@ -43,6 +57,7 @@ export function activate(context: vscode.ExtensionContext) {
         const timer = setTimeout(() => {
             service.invalidate(uri);
             decorationProvider.refresh(uri);
+            sidebarProvider.refresh(); // NEW: Refresh Sidebar
             pendingTimers.delete(uriString);
         }, 150);
         
@@ -51,7 +66,11 @@ export function activate(context: vscode.ExtensionContext) {
 
     watcher.onDidChange(triggerRefresh);
     watcher.onDidCreate(triggerRefresh);
-    watcher.onDidDelete((u: vscode.Uri) => { service.invalidate(u); decorationProvider.refresh(u); });
+    watcher.onDidDelete((u: vscode.Uri) => { 
+        service.invalidate(u); 
+        decorationProvider.refresh(u);
+        sidebarProvider.refresh(); // NEW: Refresh Sidebar
+    });
 
     // Handle renames
     context.subscriptions.push(vscode.workspace.onDidRenameFiles((e: vscode.FileRenameEvent) => {
@@ -60,6 +79,7 @@ export function activate(context: vscode.ExtensionContext) {
             service.invalidate(f.newUri);
             decorationProvider.refresh([f.oldUri, f.newUri]);
         });
+        sidebarProvider.refresh(); // NEW: Refresh Sidebar
     }));
 
     // Handle configuration changes
@@ -69,6 +89,7 @@ export function activate(context: vscode.ExtensionContext) {
             service.clearCache();
             service.clearBaseCache();
             decorationProvider.refresh();
+            sidebarProvider.refresh(); // NEW: Refresh Sidebar
         }
     }));
 
