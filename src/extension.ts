@@ -14,12 +14,24 @@ export function activate(context: vscode.ExtensionContext) {
     // 2. Watch for file changes across workspace
     const watcher = vscode.workspace.createFileSystemWatcher('**/*');
     
-    // Throttled refresh to prevent UI thrashing
-    let timer: NodeJS.Timeout | undefined;
+    // Per-URI throttled refresh to prevent UI thrashing
+    const pendingTimers = new Map<string, NodeJS.Timeout>();
+    
     const triggerRefresh = (uri: vscode.Uri) => {
-        service.invalidate(uri);
-        if (timer) clearTimeout(timer);
-        timer = setTimeout(() => decorationProvider.refresh(uri), 100);
+        const uriString = uri.toString();
+        
+        // Clear existing timer for this specific URI
+        const existing = pendingTimers.get(uriString);
+        if (existing) clearTimeout(existing);
+
+        // Set new timer
+        const timer = setTimeout(() => {
+            service.invalidate(uri);
+            decorationProvider.refresh(uri);
+            pendingTimers.delete(uriString);
+        }, 150);
+        
+        pendingTimers.set(uriString, timer);
     };
 
     watcher.onDidChange(triggerRefresh);

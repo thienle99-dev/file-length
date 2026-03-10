@@ -82,3 +82,43 @@ export function isCodeFile(filePath: string): boolean {
     
     return codeExts.has(ext);
 }
+
+/**
+ * Simple LRU cache implementation using native Map (which preserves insertion order)
+ */
+export class LRUCache<V> {
+    private map = new Map<string, V>();
+    constructor(private maxSize = 5000) {}
+
+    get(key: string): V | undefined {
+        const val = this.map.get(key);
+        if (val !== undefined) {
+            // Delete and re-set to move the accessed item to the end (most recent)
+            this.map.delete(key);
+            this.map.set(key, val);
+        }
+        return val;
+    }
+
+    set(key: string, value: V) {
+        if (this.map.has(key)) {
+            this.map.delete(key);
+        } else if (this.map.size >= this.maxSize) {
+            // Remove the oldest item (the first key in insertion order)
+            const oldestKey = this.map.keys().next().value;
+            if (oldestKey !== undefined) {
+                this.map.delete(oldestKey);
+            }
+        }
+        this.map.set(key, value);
+    }
+
+    delete(key: string) {
+        this.map.delete(key);
+    }
+
+    clear() {
+        this.map.clear();
+    }
+}
+

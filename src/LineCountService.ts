@@ -1,10 +1,13 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
-import { getCommentRegex, isCodeFile, shouldIgnorePath } from './utils';
+import { getCommentRegex, isCodeFile, shouldIgnorePath, LRUCache } from './utils';
+
+interface CacheEntry {
+    count: number;
+    mtime: number;
+}
 
 export class LineCountService {
-    // Cache: URI -> LineCount
-    private cache = new Map<string, number>();
+    private cache = new LRUCache<CacheEntry>(5000);
     private config = vscode.workspace.getConfiguration('lineCount');
 
     constructor() {
@@ -17,58 +20,50 @@ export class LineCountService {
 
     /**
      * Re-computes line count for a URI. 
-     * Uses a fast async read.
+     * Uses mtime to avoid redundant reads.
      */
     public async computeLineCount(uri: vscode.Uri): Promise<number | undefined> {
         if (!this.config.get('enabled')) return undefined;
 
         const filePath = uri.fsPath;
-
-        // 1. Skip ignored directories
         if (shouldIgnorePath(filePath)) return undefined;
-
-        // 2. Only count code files
         if (!isCodeFile(filePath)) return undefined;
 
-        // Skip binary/large files (threshold: 10MB)
         try {
             const stats = await vscode.workspace.fs.stat(uri);
             if (stats.size > 10 * 1024 * 1024) return undefined;
             if (stats.type === vscode.FileType.Directory) return undefined;
-        } catch {
-            return undefined;
-        }
 
-        try {
+            // Check cache with mtime validation
+            const cached = this.cache.get(uri.toString());
+            if (cached && cached.mtime === stats.mtime) {
+                return cached.count;
+            }
+
+            // Only read and parse if mtime changed or not in cache
             const contentBuffer = await vscode.workspace.fs.readFile(uri);
             let text = contentBuffer.toString();
 
-            // 1. Optional: Strip comments
             if (this.config.get('ignoreComments')) {
                 const regex = getCommentRegex(uri.fsPath);
-                if (regex) {
-                    text = text.replace(regex, '');
-                }
+                if (regex) text = text.replace(regex, '');
             }
 
-            // 2. Count lines
             let lines = text.split(/\r?\n/);
-
-            // 3. Optional: Filter empty lines
             if (this.config.get('showOnlyNonEmptyLines')) {
                 lines = lines.filter((line: string) => line.trim().length > 0);
             }
 
             const count = lines.length;
-            this.cache.set(uri.toString(), count);
+            this.cache.set(uri.toString(), { count, mtime: stats.mtime });
             return count;
-        } catch (e) {
+        } catch {
             return undefined;
         }
     }
 
     public getCachedCount(uri: vscode.Uri): number | undefined {
-        return this.cache.get(uri.toString());
+        return this.cache.get(uri.toString())?.count;
     }
 
     public invalidate(uri: vscode.Uri) {
@@ -79,3 +74,4 @@ export class LineCountService {
         this.cache.clear();
     }
 }
+
