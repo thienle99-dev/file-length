@@ -1,45 +1,92 @@
 # File Length & Complexity Visualizer 📊
 
-Hiển thị tổng số dòng code và độ phức tạp ngay trong thanh Explorer của VSCode. Một giải pháp nhẹ nhàng, hiệu quả để quản lý chất lượng tệp tin trong dự án của bạn.
+Display total lines of code and complexity insights directly in the VS Code Explorer. A lightweight and professional solution for managing file quality and scale in your projects.
 
+![Logo](icon.png)
 ![Mockup](mockup.png)
 
-## ✨ Tính năng nổi bật
+---
 
-- **Hiển thị trực tiếp**: Số dòng code xuất hiện ngay bên cạnh tên file trong cây thư mục Explorer.
-- **Rút gọn thông minh**: Tự động chuyển đổi các số lớn sang định dạng rút gọn (ví dụ: `1,200` -> `1.2k`).
-- **Lazy Loading**: Chỉ tính toán số dòng cho các file đang hiển thị, không làm chậm VSCode ngay cả với dự án hàng chục nghìn file.
-- **Cập nhật thời gian thực**: Tự động đếm lại khi bạn lưu file, đổi tên hoặc tạo file mới.
-- **Tùy chỉnh linh hoạt**:
-  - Bỏ qua dòng trống.
-  - Bỏ qua các dòng comment (hỗ trợ JS, TS, Python, C++, HTML, SQL, và nhiều ngôn ngữ khác).
-  - Bật/Tắt dễ dàng qua Settings.
+## ✨ Features
 
-## ⚙️ Cấu hình (Settings)
+- **🔍 Inline Display**: Line counts appear right next to filenames in the Explorer file tree.
+- **📈 Complexity Analysis**: Automatically calculates Cyclomatic Complexity and adds warning labels (⚠ or 🔴) for files that may need refactoring.
+- **🎨 Color Heatmap**: Automatically changes filename and line count colors to easily identify large files (Red > 1000 lines, Orange > 500 lines, Green < 100 lines).
+- **🚀 Lazy Loading & High Performance**:
+  - Computations are only performed for files currently visible in the viewport.
+  - Utilizes an **LRU Cache** and **mtime** validation to avoid redundant disk I/O.
+  - 150ms per-file throttling while typing to ensure a smooth UI experience.
+- **🎛️ Flexible Customization**: Ignore blank lines, skip comments (multi-language support), or exclude specific paths (`node_modules`, `dist`, etc.).
 
-Bạn có thể tùy chỉnh extension thông qua Settings (Ctrl + ,) bằng cách tìm kiếm `Line Count Explorer`:
+---
 
-| Setting                           | Mặc định | Mô tả                                                                             |
-| :-------------------------------- | :------- | :-------------------------------------------------------------------------------- |
-| `lineCount.enabled`               | `true`   | Bật hoặc tắt hiển thị số dòng.                                                    |
-| `lineCount.showOnlyNonEmptyLines` | `false`  | Nếu bật, chỉ đếm các dòng có nội dung (không tính dòng trắng).                    |
-| `lineCount.ignoreComments`        | `false`  | Nếu bật, sẽ bỏ qua các dòng chỉ chứa comment (dựa trên regex theo từng ngôn ngữ). |
+## 📖 How to Use
 
-## 🚀 Hiệu năng & Kỹ thuật
+Once installed, the extension activates automatically. You will see metrics appear next to filenames in the Explorer:
 
-Extension này được thiết kế với tiêu chuẩn "Production-ready":
+1. **Colors (Heatmap)**:
+   - **Green**: Small, maintainable files (< 100 lines).
+   - **Orange**: Growing files (> 500 lines).
+   - **Red**: Very large files; consider breaking them down (> 1000 lines).
+2. **Icons (Complexity)**:
+   - **⚠**: Medium complexity.
+   - **🔴**: High complexity (many if/else blocks, deep nesting, or too many functions).
+3. **Tooltip**: Hover over the line count to see detailed complexity scores and metrics.
 
-- **Cơ chế Cache**: Sử dụng Map để lưu trữ kết quả, giảm thiểu việc đọc ổ đĩa lặp lại.
-- **Giới hạn tệp tin**: Tự động bỏ qua các file binary hoặc file văn bản lớn hơn 10MB để đảm bảo UI luôn mượt mà.
-- **Throttling**: Sử dụng cơ chế chờ (debounce) 100ms khi người dùng gõ phím liên tục để tránh lãng phí tài nguyên CPU.
-- **API Chính thống**: Sử dụng `FileDecorationProvider` - API chính thức của VSCode cho việc trang trí Explorer.
+---
 
-## 🛠️ Cài đặt từ mã nguồn
+## ⚙️ Configuration (Settings)
 
-1. Clone repository này.
-2. Chạy `pnpm install`.
-3. Nhấn `F5` để mở cửa sổ Extension Development Host và trải nghiệm.
+Open Settings (`Ctrl + ,`) and search for `File Length Visualizer`:
 
-## 📄 Giấy phép
+| Setting                           | Default | Description                                                      |
+| :-------------------------------- | :------ | :--------------------------------------------------------------- |
+| `lineCount.enabled`               | `true`  | Enable or disable the entire extension.                          |
+| `lineCount.showComplexity`        | `true`  | Show complexity warning icons (⚠/🔴).                            |
+| `lineCount.showHeatmap`           | `true`  | Automatically change filename color based on length.             |
+| `lineCount.ignoreComments`        | `false` | Skip lines containing only comments (JS, TS, Python, C++, etc.). |
+| `lineCount.showOnlyNonEmptyLines` | `false` | Only count lines that contain content.                           |
 
-MIT License.
+---
+
+## 🛠️ Build from Source
+
+### 📋 Prerequisites
+
+- **Node.js**: Version 16.x or later.
+- **pnpm**: Recommended (or npm/yarn).
+- **VS Code**: Version 1.75.0 or later.
+
+### 🔨 Development Workflow
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/thienle99-dev/file-length.git
+   cd file-length
+   ```
+2. **Install dependencies**:
+   ```bash
+   pnpm install
+   ```
+3. **Run in Debug Mode**:
+   - Press `F5` or go to the `Run and Debug` tab and select `Run Extension`.
+   - A new VS Code window (Extension Development Host) will open for testing.
+
+### 📦 Packaging & Publishing
+
+To create a `.vsix` installation file:
+
+1. Install `vsce`: `pnpm install -g @vscode/vsce`
+2. Package the extension:
+   ```bash
+   vsce package
+   ```
+   _Note: The generated `.vsix` file can be used for manual installation in your VS Code._
+
+---
+
+## 📄 License
+
+Released under the **MIT License**. See [LICENSE](LICENSE.md) for details.
+
+Copyright (c) 2026 **ChiThien**.
