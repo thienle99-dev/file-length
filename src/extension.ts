@@ -55,7 +55,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Handle renames
     context.subscriptions.push(vscode.workspace.onDidRenameFiles((e: vscode.FileRenameEvent) => {
-        e.files.forEach((f) => {
+        e.files.forEach((f: { oldUri: vscode.Uri, newUri: vscode.Uri }) => {
             service.invalidate(f.oldUri);
             service.invalidate(f.newUri);
             decorationProvider.refresh([f.oldUri, f.newUri]);

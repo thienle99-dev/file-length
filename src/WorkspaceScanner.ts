@@ -42,7 +42,7 @@ export class WorkspaceScanner {
             const batch = files.slice(i, i + batchSize);
             const results = await Promise.all(batch.map(uri => this.service.computeLineCount(uri)));
             
-            results.forEach((entry, index) => {
+            results.forEach((entry: any, index: number) => {
                 if (entry) {
                     stats.totalFiles++;
                     stats.totalCode += entry.codeLines;

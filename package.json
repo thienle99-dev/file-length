@@ -2,7 +2,7 @@
   "name": "file-length-visualizer",
   "displayName": "File Length & Complexity Visualizer",
   "description": "Displays line counts and complexity insights next to file names in the Explorer.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "icon": "icon.png",
   "publisher": "ChiThien",
   "repository": {

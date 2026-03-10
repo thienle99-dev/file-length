@@ -102,7 +102,7 @@ export class LineCountService {
             const rawLines = text.split(/\r?\n/);
 
             const commentRegex = getCommentRegex(filePath);
-            const mappedLines = rawLines.map(line => {
+            const mappedLines = rawLines.map((line: string) => {
                 const trimmed = line.trim();
                 const isBlank = trimmed.length === 0;
                 let isComment = false;
@@ -115,8 +115,8 @@ export class LineCountService {
                 return { isBlank, isComment };
             });
 
-            const blankLines = mappedLines.filter(l => l.isBlank).length;
-            const commentLines = mappedLines.filter(l => l.isComment).length;
+            const blankLines = mappedLines.filter((l: { isBlank: boolean }) => l.isBlank).length;
+            const commentLines = mappedLines.filter((l: { isComment: boolean }) => l.isComment).length;
             const codeLines = rawLines.length - blankLines - commentLines;
 
             let processedText = text;
