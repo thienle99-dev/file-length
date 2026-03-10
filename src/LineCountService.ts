@@ -161,6 +161,11 @@ export class LineCountService {
     public invalidate(uri: vscode.Uri) {
         this.cache.delete(uri.toString());
     }
+
+    public dispose() {
+        this.cache.clear();
+        this.baseCache.clear();
+    }
 }
 
 

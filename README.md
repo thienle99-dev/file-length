@@ -36,6 +36,7 @@ Get a "birds-eye view" of your entire project.
 
 ### 3. 🚀 Built for Scale
 
+- **Smart Ignore**: Automatically respects your `.gitignore` rules to skip build artifacts and temporary files.
 - **Smart LRU Cache**: Results are cached and only recomputed when files actually change.
 - **Lazy Loading**: Only processes what you see in the Explorer; handles monorepos with ease.
 - **Throttled Updates**: Efficient processing ensures no impact on typing speed.

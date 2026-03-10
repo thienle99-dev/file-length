@@ -1,4 +1,7 @@
 import * as vscode from 'vscode';
+import ignore, { Ignore } from 'ignore';
+import * as path from 'path';
+import * as fs from 'fs';
 
 /**
  * Formats a number into an abbreviated string (e.g., 1.2k) or comma-separated.
@@ -88,7 +91,7 @@ export function calculateComplexity(text: string, filePath: string): { score: nu
     return { score, level };
 }
 
-const IGNORED_PATHS = [
+const DEFAULT_IGNORED_PATHS = [
     'node_modules',
     'dist',
     'build',
@@ -97,19 +100,63 @@ const IGNORED_PATHS = [
     'out'
 ];
 
+export class GitignoreManager {
+    private ig: Ignore = ignore();
+    private workspaceRoot: string | undefined;
+
+    constructor() {
+        this.workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        this.loadGitignore();
+    }
+
+    public loadGitignore() {
+        if (!this.workspaceRoot) return;
+        
+        const gitignorePath = path.join(this.workspaceRoot, '.gitignore');
+        this.ig = ignore(); // Reset
+        
+        // Add defaults
+        this.ig.add(DEFAULT_IGNORED_PATHS);
+
+        if (fs.existsSync(gitignorePath)) {
+            try {
+                const content = fs.readFileSync(gitignorePath, 'utf8');
+                this.ig.add(content);
+            } catch (err) {
+                console.error('Failed to read .gitignore', err);
+            }
+        }
+    }
+
+    public ignores(filePath: string): boolean {
+        if (!this.workspaceRoot) {
+            // Fallback to basic check if no workspace
+            const normalized = filePath.replace(/\\/g, '/');
+            return DEFAULT_IGNORED_PATHS.some(p => normalized.includes(p));
+        }
+
+        const relativePath = path.relative(this.workspaceRoot, filePath);
+        // ignore() library expects forward slashes and relative paths from the ignore file location
+        const normalizedRelPath = relativePath.replace(/\\/g, '/');
+        
+        if (normalizedRelPath.startsWith('..') || path.isAbsolute(normalizedRelPath)) {
+            return false; // Outside workspace
+        }
+
+        return this.ig.ignores(normalizedRelPath);
+    }
+}
+
+export const gitignoreManager = new GitignoreManager();
+
 export function shouldIgnorePath(filePath: string): boolean {
-    const normalizedPath = filePath.replace(/\\/g, '/');
-    return IGNORED_PATHS.some(p => {
-        const pattern = new RegExp(`(^|/)${p.replace('.', '\\.')}(/|$)`);
-        return pattern.test(normalizedPath);
-    });
+    return gitignoreManager.ignores(filePath);
 }
 
 export function isCodeFile(filePath: string): boolean {
     const ext = filePath.split('.').pop()?.toLowerCase();
     if (!ext) return false;
     
-    // Check if it's in our comment patterns or other common code/config files
     const codeExts = new Set([
         ...Object.keys(COMMENT_PATTERNS),
         'md', 'json', 'txt', 'ini', 'conf', 'env', 'gradle', 'properties'
@@ -119,7 +166,7 @@ export function isCodeFile(filePath: string): boolean {
 }
 
 /**
- * Simple LRU cache implementation using native Map (which preserves insertion order)
+ * Simple LRU cache implementation
  */
 export class LRUCache<V> {
     private map = new Map<string, V>();
@@ -128,7 +175,6 @@ export class LRUCache<V> {
     get(key: string): V | undefined {
         const val = this.map.get(key);
         if (val !== undefined) {
-            // Delete and re-set to move the accessed item to the end (most recent)
             this.map.delete(key);
             this.map.set(key, val);
         }
@@ -139,7 +185,6 @@ export class LRUCache<V> {
         if (this.map.has(key)) {
             this.map.delete(key);
         } else if (this.map.size >= this.maxSize) {
-            // Remove the oldest item (the first key in insertion order)
             const oldestKey = this.map.keys().next().value;
             if (oldestKey !== undefined) {
                 this.map.delete(oldestKey);
@@ -156,5 +201,3 @@ export class LRUCache<V> {
         this.map.clear();
     }
 }
-
-

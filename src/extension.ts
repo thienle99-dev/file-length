@@ -4,6 +4,7 @@ import { LineCountDecorationProvider } from './FileDecorationProvider';
 import { WorkspaceScanner } from './WorkspaceScanner';
 import { DashboardPanel } from './DashboardPanel';
 import { SidebarProvider } from './SidebarProvider';
+import { gitignoreManager } from './utils';
 
 export function activate(context: vscode.ExtensionContext) {
     const service = new LineCountService();
@@ -42,7 +43,19 @@ export function activate(context: vscode.ExtensionContext) {
 
     // 4. Watch for file changes across workspace
     const watcher = vscode.workspace.createFileSystemWatcher('**/*');
+    const gitignoreWatcher = vscode.workspace.createFileSystemWatcher('**/.gitignore');
     
+    // Refresh .gitignore rules
+    gitignoreWatcher.onDidChange(() => {
+        gitignoreManager.loadGitignore();
+        service.clearCache();
+        decorationProvider.refresh();
+        sidebarProvider.refresh();
+    });
+    gitignoreWatcher.onDidCreate(() => {
+        gitignoreManager.loadGitignore();
+    });
+
     // Per-URI throttled refresh to prevent UI thrashing
     const pendingTimers = new Map<string, NodeJS.Timeout>();
     
